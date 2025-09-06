@@ -3,46 +3,53 @@ package rpg;
 import java.util.Scanner;
 
 public class Combate {
+
     public static void lutar(Personagem jogador, Personagem inimigo) {
         Scanner sc = new Scanner(System.in);
-        System.out.println("\nInício do combate entre " + jogador.getNome() + " e " + inimigo.getNome());
+
+        System.out.println("\nInício do combate: " + jogador.getNome() + " vs " + inimigo.getNome());
 
         while (jogador.estaVivo() && inimigo.estaVivo()) {
-            // TURNO DO JOGADOR
+
+        
             System.out.println("\n--- Turno de " + jogador.getNome() + " ---");
             System.out.println("1 - Atacar");
-            if (jogador instanceof Mago) {
-                System.out.println("2 - Bola de Fogo");
-            }
+            if (jogador instanceof Mago) System.out.println("2 - Bola de Fogo");
             System.out.print("Escolha sua ação: ");
             int escolha = sc.nextInt();
 
-            switch (escolha) {
-                case 1:
-                    jogador.atacar(inimigo);
-                    break;
-                case 2:
-                    if (jogador instanceof Mago) {
-                        ((Mago) jogador).bolaDeFogo(inimigo);
-                    } else {
-                        System.out.println("Ação inválida! Você perdeu o turno.");
+            try {
+                switch (escolha) {
+                    case 1 -> jogador.atacar(inimigo);
+                    case 2 -> {
+                        if (jogador instanceof Mago)
+                            ((Mago) jogador).bolaDeFogo(inimigo);
+                        else
+                            throw new AtaqueInvalidoException("Ação inválida para essa classe!");
                     }
-                    break;
-                default:
-                    System.out.println("Ação inválida! Você perdeu o turno.");
+                    default -> throw new AtaqueInvalidoException("Opção inválida! Você perdeu o turno.");
+                }
+            } catch (ManaInsuficienteException | AtaqueInvalidoException e) {
+                System.out.println(e.getMessage());
             }
 
+            // Verifica se o inimigo morreu
             if (!inimigo.estaVivo()) break;
 
+            // --- TURNO DO INIMIGO (ataque automático) ---
             System.out.println("\n--- Turno de " + inimigo.getNome() + " ---");
-            inimigo.atacar(jogador);
+            try {
+                inimigo.atacar(jogador);
+            } catch (ManaInsuficienteException | AtaqueInvalidoException e) {
+                System.out.println(inimigo.getNome() + " não pôde atacar: " + e.getMessage());
+            }
         }
 
-        // Mensagem final
+        // --- RESULTADO FINAL ---
         if (jogador.estaVivo()) {
             System.out.println("\nParabéns, " + jogador.getNome() + "! Você venceu o combate!");
         } else {
-            System.out.println("\nQue pena... " + inimigo.getNome() + " venceu. Tente novamente!");
+            System.out.println("\nQue pena, " + inimigo.getNome() + " venceu. Tente novamente!");
         }
     }
 }
